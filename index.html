@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WiFi Management System - Login & Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .wifi-signal {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .float-animation {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .input-focus {
+            transition: all 0.3s ease;
+        }
+        
+        .input-focus:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .btn-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .loading-spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid white;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .notification {
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .table-row-hover:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transition: all 0.2s ease;
+        }
+        
+        .modal-backdrop {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+        
+        .delete-animation {
+            animation: deleteRow 0.5s ease-out forwards;
+        }
+        
+        @keyframes deleteRow {
+            0% { 
+                opacity: 1; 
+                transform: translateX(0);
+            }
+            50% {
+                transform: translateX(-20px);
+            }
+            100% { 
+                opacity: 0; 
+                transform: translateX(-100px);
+            }
+        }
+        
+        .confirm-dialog {
+            animation: scaleIn 0.3s ease-out;
+        }
+        
+        @keyframes scaleIn {
+            from { 
+                opacity: 0; 
+                transform: scale(0.8);
+            }
+            to { 
+                opacity: 1; 
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen flex items-center justify-center p-4">
+    <!-- Background Animation -->
+    <div class="fixed inset-0 overflow-hidden">
+        <div class="absolute -top-40 -right-40 w-80 h-80 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-30 float-animation"></div>
+        <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-30 float-animation" style="animation-delay: 2s;"></div>
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-indigo-300 rounded-full mix-blend-multiply filter blur-xl opacity-30 float-animation" style="animation-delay: 4s;"></div>
+    </div>
+
+    <!-- Main Container -->
+    <div id="mainContainer" class="relative z-10 w-full max-w-4xl">
+        <!-- Mode Toggle -->
+        <div class="text-center mb-6">
+            <div class="inline-flex bg-white/20 rounded-full p-1 glass-effect">
+                <button id="userModeBtn" class="px-6 py-2 rounded-full text-white font-medium transition-all duration-300 bg-white text-purple-600">
+                    <i class="fas fa-user mr-2"></i>User Login
+                </button>
+                <button id="adminModeBtn" class="px-6 py-2 rounded-full text-white/80 font-medium transition-all duration-300 hover:text-white">
+                    <i class="fas fa-user-shield mr-2"></i>Admin Panel
+                </button>
+            </div>
+        </div>
+
+        <!-- User Login Section -->
+        <div id="userLoginSection" class="fade-in">
+            <!-- WiFi Status Indicator -->
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-20 h-20 bg-white rounded-full glass-effect mb-4 wifi-signal">
+                    <i class="fas fa-wifi text-4xl text-purple-600"></i>
+                </div>
+                <h1 class="text-3xl font-bold text-white mb-2">WiFi Login</h1>
+                <p class="text-purple-100">Connect to our secure network</p>
+            </div>
+
+            <!-- Login Form -->
+            <div class="glass-effect rounded-2xl p-8 shadow-2xl">
+                <form id="loginForm" class="space-y-6">
+                    <!-- Username/Email Input -->
+                    <div>
+                        <label class="block text-white text-sm font-medium mb-2">
+                            <i class="fas fa-user mr-2"></i>Username atau Email
+                        </label>
+                        <input type="text" id="username" required
+                               class="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/60 focus:outline-none focus:border-white/50 input-focus"
+                               placeholder="Masukkan username atau email">
+                    </div>
+
+                    <!-- Password Input -->
+                    <div>
+                        <label class="block text-white text-sm font-medium mb-2">
+                            <i class="fas fa-lock mr-2"></i>Password
+                        </label>
+                        <div class="relative">
+                            <input type="password" id="password" required
+                                   class="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/60 focus:outline-none focus:border-white/50 input-focus pr-12"
+                                   placeholder="Masukkan password">
+                            <button type="button" id="togglePassword" 
+                                    class="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white transition-colors">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Remember Me -->
+                    <div class="flex items-center">
+                        <label class="flex items-center text-white/80 text-sm">
+                            <input type="checkbox" id="rememberMe" class="mr-2 rounded">
+                            Ingat saya
+                        </label>
+                    </div>
+
+                    <!-- Login Button -->
+                    <button type="submit" id="loginBtn"
+                            class="w-full bg-white text-purple-600 font-semibold py-3 px-4 rounded-lg btn-hover focus:outline-none focus:ring-2 focus:ring-white/50">
+                        <span id="btnText">Login</span>
+                        <div id="btnLoader" class="loading-spinner mx-auto hidden"></div>
+                    </button>
+                </form>
+
+                <!-- Sign Up Link -->
+                <p class="text-center mt-6 text-white/80 text-sm">
+                    Belum punya akun? 
+                    <a href="#" class="text-white font-medium hover:underline">Hubungi Admin</a>
+                </p>
+            </div>
+
+            <!-- Network Info -->
+            <div class="mt-6 text-center">
+                <p class="text-white/60 text-sm">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Terhubung ke: <span class="font-medium text-white">GuestWiFi_5G</span>
+                </p>
+                <p class="text-white/60 text-sm mt-1">
+                    IP Address: <span class="font-medium text-white">192.168.1.100</span>
+                </p>
+            </div>
+        </div>
+
+        <!-- Admin Panel Section -->
+        <div id="adminPanelSection" class="hidden fade-in">
+            <!-- Admin Header -->
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-20 h-20 bg-white rounded-full glass-effect mb-4">
+                    <i class="fas fa-user-shield text-4xl text-purple-600"></i>
+                </div>
+                <h1 class="text-3xl font-bold text-white mb-2">Admin Panel</h1>
+                <p class="text-purple-100">Manage WiFi Users</p>
+            </div>
+
+            <!-- Admin Login Form (shown if not logged in) -->
+            <div id="adminLoginForm" class="glass-effect rounded-2xl p-8 shadow-2xl mb-6">
+                <form id="adminAuthForm" class="space-y-4">
+                    <div>
+                        <label class="block text-white text-sm font-medium mb-2">
+                            <i class="fas fa-key mr-2"></i>Admin Password
+                        </label>
+                        <input type="password" id="adminPassword" required
+                               class="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/60 focus:outline-none focus:border-white/50 input-focus"
+                               placeholder="Masukkan password admin">
+                    </div>
+                    <button type="submit" class="w-full bg-white text-purple-600 font-semibold py-3 px-4 rounded-lg btn-hover">
+                        Login Admin
+                    </button>
+                </form>
+                <p class="text-center mt-4 text-white/60 text-xs">
+                    Default password: admin123
+                </p>
+            </div>
+
+            <!-- Admin Dashboard (shown after login) -->
+            <div id="adminDashboard" class="hidden">
+                <!-- Add User Form -->
+                <div class="glass-effect rounded-2xl p-6 shadow-2xl mb-6">
+                    <h2 class="text-xl font-semibold text-white mb-4">
+                        <i class="fas fa-user-plus mr-2"></i>Tambah User Baru
+                    </h2>
+                    <form id="addUserForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-white text-sm font-medium mb-2">Username</label>
+                            <input type="text" id="newUsername" required
+                                   class="w-full px-4 py-2 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/60 focus:outline-none focus:border-white/50 input-focus"
+                                   placeholder="Username">
+                        </div>
+                        <div>
+                            <label class="block text-white text-sm font-medium mb-2">Email</label>
+                            <input type="email" id="newEmail" required
+                                   class="w-full px-4 py-2 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/60 focus:outline-none focus:border-white/50 input-focus"
+                                   placeholder="email@example.com">
+                        </div>
+                        <div>
+                            <label class="block text-white text-sm font-medium mb-2">Password</label>
+                            <input type="password" id="newPassword" required
+                                   class="w-full px-4 py-2 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/60 focus:outline-none focus:border-white/50 input-focus"
+                                   placeholder="Password">
+                        </div>
+                        <div>
+                            <label class="block text-white text-sm font-medium mb-2">Role</label>
+                            <select id="newRole" class="w-full px-4 py-2 bg-white/20 border border-white/30 rounded-lg text-white focus:outline-none focus:border-white/50">
+                                <option value="user">User</option>
+                                <option value="premium">Premium</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2">
+                            <button type="submit" class="w-full bg-green-500 text-white font-semibold py-2 px-4 rounded-lg btn-hover">
+                                <i class="fas fa-plus mr-2"></i>Tambah User
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Users Table -->
+                <div class="glass-effect rounded-2xl p-6 shadow-2xl">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold text-white">
+                            <i class="fas fa-users mr-2"></i>Daftar User
+                        </h2>
+                        <div class="text-white/60 text-sm">
+                            Total: <span id="userCount" class="font-medium text-white">0</span> users
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-white">
+                            <thead>
+                                <tr class="border-b border-white/20">
+                                    <th class="text-left py-3 px-4">Username</th>
+                                    <th class="text-left py-3 px-4">Email</th>
+                                    <th class="text-left py-3 px-4">Role</th>
+                                    <th class="text-left py-3 px-4">Status</th>
+                                    <th class="text-center py-3 px-4">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <!-- Users will be dynamically added here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Logout Button -->
+                <div class="text-center mt-6">
+                    <button id="adminLogoutBtn" class="bg-red-500 text-white font-semibold py-2 px-6 rounded-lg btn-hover">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout Admin
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div id="editUserModal" class="fixed inset-0 z-50 hidden">
+        <div class="modal-backdrop fixed inset-0" onclick="closeEditModal()"></div>
+        <div class="fixed inset-0 flex items-center justify-center p-4">
+            <div class="glass-effect rounded-2xl p-6 shadow-2xl w-full max-w-md fade-in">
+                <h3 class="text-xl font-semibold text-white mb-4">
+                    <i class="fas fa-edit mr-2"></i>Edit User
+                </h3>
+                <form id="editUserForm" class="space-y-4">
+                    <input type="hidden" id="editUserId">
+                    <div>
+                        <label class="block text-white text-sm font-medium mb-2">Username</label>
+                        <input type="text" id="editUsername" required
+                               class="w-full px-4 py-2 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/60 focus:outline-none focus:border-white/50">
+                    </div>
+                    <div>
+                        <label class="block text-white text-sm font-medium mb-2">Email</label>
+                        <input type="email" id="editEmail" required
+                               class="w-full px-4 py-2 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/60 focus:outline-none focus:border-white/50">
+                    </div>
+                    <div>
+                        <label class="block text-white text-sm font-medium mb-2">Role</label>
+                        <select id="editRole" class="w-full px-4 py-2 bg-white/20 border border-white/30 rounded-lg text-white focus:outline-none focus:border-white/50">
+                            <option value="user">User</option>
+                            <option value="premium">Premium</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-white text-sm font-medium mb-2">Password (Kosongkan jika tidak ingin mengubah)</label>
+                        <input type="password" id="editPassword"
+                               class="w-full px-4 py-2 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/60 focus:outline-none focus:border-white/50">
+                    </div>
+                    <div class="flex space-x-3">
+                        <button type="submit" class="flex-1 bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg btn-hover">
+                            Simpan
+                        </button>
+                        <button type="button" onclick="closeEditModal()" class="flex-1 bg-gray-500 text-white font-semibold py-2 px-4 rounded-lg btn-hover">
+                            Batal
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteConfirmModal" class="fixed inset-0 z-50 hidden">
+        <div class="modal-backdrop fixed inset-0" onclick="closeDeleteConfirm()"></div>
+        <div class="fixed inset-0 flex items-center justify-center p-4">
+            <div class="glass-effect rounded-2xl p-6 shadow-2xl w-full max-w-md confirm-dialog">
+                <div class="text-center">
+                    <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-500 mb-4">
+                        <i class="fas fa-exclamation-triangle text-2xl text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-white mb-2">Konfirmasi Hapus</h3>
+                    <p class="text-white/80 mb-6">
+                        Apakah Anda yakin ingin menghapus user <strong id="deleteUserName" class="text-white"></strong>?
+                        <br><small class="text-white/60">Tindakan ini tidak dapat dibatalkan.</small>
+                    </p>
+                    <div class="flex space-x-3">
+                        <button onclick="confirmDelete()" class="flex-1 bg-red-500 text-white font-semibold py-2 px-4 rounded-lg btn-hover">
+                            <i class="fas fa-trash mr-2"></i>Hapus
+                        </button>
+    
